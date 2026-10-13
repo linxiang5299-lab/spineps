@@ -16,6 +16,7 @@ from typing_extensions import Self
 from spineps.architectures.pl_densenet import PLClassifier
 from spineps.seg_enums import OutputType
 from spineps.seg_model import Segmentation_Inference_Config, SegmentationModel
+from spineps.utils.device import pick_device
 from spineps.utils.filepaths import search_path
 
 logger = No_Logger(prefix="VertLabelingClassifier")
@@ -114,7 +115,7 @@ class VertLabelingClassifier(SegmentationModel):
         """
         super().__init__(model_folder, inference_config, use_cpu, default_verbose, default_allow_tqdm)
         assert len(self.inference_config.expected_inputs) == 1, "Unet3D cannot expect more than one input"
-        self.device = torch.device("cuda:0" if torch.cuda.is_available() and not use_cpu else "cpu")
+        self.device = pick_device(use_cpu)
         self.final_size: tuple[int, int, int] = DEFAULT_CLASSIFIER_INPUT_SIZE
         self.patch_rotation: bool = True
         self.totensor = ToTensor()
@@ -152,7 +153,7 @@ class VertLabelingClassifier(SegmentationModel):
             )
         model.eval()
         model.net.eval()
-        self.device = torch.device("cuda:0" if torch.cuda.is_available() and not self.use_cpu else "cpu")
+        self.device = pick_device(self.use_cpu)
         model.to(self.device)
         self.predictor = model
         self.cutout_size = model.opt.final_size

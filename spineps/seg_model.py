@@ -19,6 +19,7 @@ from spineps.architectures.pl_unet import PLNet
 from spineps.architectures_new.pl_unet import PLNet as PLNet_new
 from spineps.seg_enums import Acquisition, InputType, Modality, OutputType
 from spineps.utils.citation_reminder import citation_reminder
+from spineps.utils.device import pick_device, pick_device_name
 from spineps.utils.filepaths import search_path
 from spineps.utils.seg_modelconfig import Segmentation_Inference_Config, load_inference_config
 
@@ -447,7 +448,7 @@ class SegmentationModelNNunet(SegmentationModel):
             init_threads=not threads_started,
             allow_non_final=True,
             verbose=False,
-            ddevice="cuda" if not self.use_cpu else "cpu",
+            ddevice=pick_device_name(self.use_cpu),
         )
         threads_started = True
         self.predictor.allow_tqdm = self.default_allow_tqdm
@@ -523,7 +524,7 @@ class SegmentationModelUnet3D(SegmentationModel):
         if not os.path.exists(self.model_folder):  # noqa: PTH110
             raise FileNotFoundError(f"model_folder does not exist, got {self.model_folder}")
 
-        self.device = torch.device("cuda:0" if torch.cuda.is_available() and not self.use_cpu else "cpu")
+        self.device = pick_device(self.use_cpu)
         chktpath = search_path(self.model_folder, "**/*weights*.ckpt")
         if len(chktpath) != 1:
             raise FileNotFoundError(
